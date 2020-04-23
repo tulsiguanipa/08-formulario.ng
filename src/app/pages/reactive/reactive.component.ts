@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
+import { ValidadoresService } from '../../services/validadores.service';
 
 @Component({
   selector: 'app-reactive',
@@ -10,7 +11,8 @@ export class ReactiveComponent implements OnInit {
 
   forma: FormGroup;
 
-  constructor( private formBuilder: FormBuilder) {
+  constructor( private formBuilder: FormBuilder,
+              private validadores: ValidadoresService ) {
     this.crearFormulario();
     this.cargarData();
    }
@@ -18,22 +20,25 @@ export class ReactiveComponent implements OnInit {
   ngOnInit(): void {
   }
   
-  get nombreNoValido(){
+  get pasatiempos() {
+    return this.forma.get('pasatiempos') as FormArray;
+  }
+  get nombreNoValido() {
     return this.forma.get('nombre').invalid && this.forma.get('nombre').touched;
   }
 
-  get apellidoNoValido(){
+  get apellidoNoValido() {
     return this.forma.get('apellido').invalid && this.forma.get('apellido').touched;
   }
   
-  get correoNoValido(){
+  get correoNoValido() {
     return this.forma.get('correo').invalid && this.forma.get('correo').touched;
   }
 
-  get ciudadNoValido(){
+  get ciudadNoValido() {
     return this.forma.get('direccion.ciudad').invalid && this.forma.get('direccion.ciudad').touched;
   }
-  get barrioNoValido(){
+  get barrioNoValido() {
     return this.forma.get('direccion.barrio').invalid && this.forma.get('direccion.barrio').touched;
   }
   
@@ -48,19 +53,16 @@ export class ReactiveComponent implements OnInit {
 
   this.forma = this.formBuilder.group({
     nombre: ['', [Validators.required, Validators.minLength(5)]],
-    apellido: ['', [Validators.required, Validators.minLength(5)]],
+    apellido: ['', [Validators.required, Validators.minLength(5), this.validadores.noGuanipa]],
     correo: ['', [Validators.required, Validators.pattern('[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$')]],
     direccion: this.formBuilder.group({
       ciudad: ['', Validators.required],
       barrio: ['', Validators.required],
       calle: ['', Validators.required],
-
-
-    })
+    }),
+    pasatiempos: this.formBuilder.array([])
   });
-  
-
-  }
+}
 
   cargarData(){
     //this.forma.setValue
@@ -76,6 +78,14 @@ export class ReactiveComponent implements OnInit {
     });
 }
 
+agregarPasatiempo(){
+  this.pasatiempos.push( this.formBuilder.control(' '));
+}
+
+borrarPasatiempo( i: number){
+  this.pasatiempos.removeAt(i);
+}
+
   guardar(){
 
     if (this.forma.invalid) {
@@ -83,8 +93,8 @@ export class ReactiveComponent implements OnInit {
       Object.values(this.forma.controls).forEach(control => {
 
         if( control instanceof FormGroup ){
-          Object.values(control.controls).forEach(control => {control.markAllAsTouched();})
-        }else{
+          Object.values(control.controls).forEach( control => {control.markAllAsTouched();} )
+        } else {
           control.markAsTouched();
 
         }
