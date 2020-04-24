@@ -12,14 +12,15 @@ export class ReactiveComponent implements OnInit {
   forma: FormGroup;
 
   constructor( private formBuilder: FormBuilder,
-              private validadores: ValidadoresService ) {
+               private validadores: ValidadoresService) {
     this.crearFormulario();
     this.cargarData();
+    this.crearListeners();
    }
 
   ngOnInit(): void {
   }
-  
+
   get pasatiempos() {
     return this.forma.get('pasatiempos') as FormArray;
   }
@@ -30,23 +31,39 @@ export class ReactiveComponent implements OnInit {
   get apellidoNoValido() {
     return this.forma.get('apellido').invalid && this.forma.get('apellido').touched;
   }
-  
+
   get correoNoValido() {
     return this.forma.get('correo').invalid && this.forma.get('correo').touched;
   }
 
+
+  get usuarioNovalido() {
+    return this.forma.get('usuario').invalid && this.forma.get('usuario').touched;
+  }
+
+  
   get ciudadNoValido() {
     return this.forma.get('direccion.ciudad').invalid && this.forma.get('direccion.ciudad').touched;
   }
   get barrioNoValido() {
     return this.forma.get('direccion.barrio').invalid && this.forma.get('direccion.barrio').touched;
   }
-  
-  get calleNoValido(){
+
+  get calleNoValido() {
     return this.forma.get('direccion.calle').invalid && this.forma.get('direccion.calle').touched;
   }
-  
-  
+
+  get pass1Novalido() {
+    return this.forma.get('pass1').invalid && this.forma.get('pass1').touched;
+  }
+
+  get pass2Novalido() {
+    const pass1 =  this.forma.get('pass1').value;
+    const pass2 =  this.forma.get('pass2').value;
+
+    return ( pass1 === pass2 ) ? false : true;
+  }
+
 
 
   crearFormulario() {
@@ -55,17 +72,35 @@ export class ReactiveComponent implements OnInit {
     nombre: ['', [Validators.required, Validators.minLength(5)]],
     apellido: ['', [Validators.required, Validators.minLength(5), this.validadores.noGuanipa]],
     correo: ['', [Validators.required, Validators.pattern('[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$')]],
+    pass1: ['', [Validators.required]],
+    pass2: ['', [Validators.required]],
+    usuario: ['', , this.validadores.existeUsuario],
     direccion: this.formBuilder.group({
       ciudad: ['', Validators.required],
       barrio: ['', Validators.required],
       calle: ['', Validators.required],
     }),
     pasatiempos: this.formBuilder.array([])
+  },{
+    validators: this.validadores.passwordsIguales('pass1', 'pass2')
   });
 }
 
-  cargarData(){
-    //this.forma.setValue
+crearListeners(){
+  //valuechange es un observable que reusleve 
+  // this.forma.valueChanges.subscribe( valor => {
+  //   console.log(valor);
+  // });
+
+  // this.forma.statusChanges.subscribe( status => {
+  //   console.log(status);
+  // })
+
+  this.forma.get('nombre').valueChanges.subscribe( console.log);
+}
+
+  cargarData() {
+    // this.forma.setValue
     this.forma.reset({
       nombre: 'Juanita',
       apellido: 'Perez',
@@ -73,27 +108,28 @@ export class ReactiveComponent implements OnInit {
       direccion: {
         ciudad: 'Buenos aires',
         barrio: 'chacarita',
-        calle: "Olleros"
-        }
+        calle: 'Olleros'     },
+      pass1: '',
+      pass2: ''
     });
 }
 
-agregarPasatiempo(){
+agregarPasatiempo() {
   this.pasatiempos.push( this.formBuilder.control(' '));
 }
 
-borrarPasatiempo( i: number){
+borrarPasatiempo( i: number) {
   this.pasatiempos.removeAt(i);
 }
 
-  guardar(){
+  guardar() {
 
     if (this.forma.invalid) {
 
       Object.values(this.forma.controls).forEach(control => {
 
-        if( control instanceof FormGroup ){
-          Object.values(control.controls).forEach( control => {control.markAllAsTouched();} )
+        if ( control instanceof FormGroup ) {
+          Object.values(control.controls).forEach( control => {control.markAllAsTouched(); } );
         } else {
           control.markAsTouched();
 
@@ -104,10 +140,10 @@ borrarPasatiempo( i: number){
     }
     console.log(this.forma);
 
-    //reset de los campos
+    // reset de los campos
 
     this.forma.reset({
-      
+
     });
   }
 }
